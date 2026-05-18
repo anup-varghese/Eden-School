@@ -376,83 +376,23 @@
         <div class="inline-flex items-center gap-3 bg-white rounded-2xl shadow-sm px-6 py-3 mt-4 border border-gray-100">
           <img src="https://upload.wikimedia.org/wikipedia/commons/2/2f/Google_2015_logo.svg" alt="Google" class="h-5" />
           <div class="flex items-baseline gap-1">
-            <span class="font-nunito font-black text-2xl text-esl-dark">4.9</span>
+            <span id="googleRating" class="font-nunito font-black text-2xl text-esl-dark">4.9</span>
             <div class="stars text-lg">★★★★★</div>
           </div>
-          <span class="text-sm text-gray-500 font-inter">Based on Google Reviews</span>
+          <span id="googleRatingCount" class="text-sm text-gray-500 font-inter">Based on Google Reviews</span>
         </div>
       </div>
 
       <!-- Review cards grid -->
       <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-5 mb-10">
 
-        <!-- Review 1 -->
-        <div class="review-card">
-          <div class="review-header">
-            <div class="reviewer-avatar" style="background:#00AECE;">A</div>
-            <div>
-              <div class="reviewer-name">Anitha Rajan</div>
-              <div class="reviewer-meta">3 months ago · Google</div>
-            </div>
-          </div>
-          <div class="stars text-sm mb-2">★★★★★</div>
-          <p class="review-text">"My daughter has blossomed so much since joining Eden School. The teachers are incredibly caring and the activities keep the children engaged every single day. Best decision we made!"</p>
-          <div class="review-footer">
-            <img src="https://upload.wikimedia.org/wikipedia/commons/2/2f/Google_2015_logo.svg" alt="Google" class="h-3.5" />
-          </div>
-        </div>
+        <!-- Skeletons shown while app.js loads real reviews from Firestore -->
+        <div class="review-skeleton"></div>
+        <div class="review-skeleton"></div>
+        <div class="review-skeleton"></div>
+        <div class="review-skeleton"></div>
 
-        <!-- Review 2 -->
-        <div class="review-card">
-          <div class="review-header">
-            <div class="reviewer-avatar" style="background:#E81FA3;">S</div>
-            <div>
-              <div class="reviewer-name">Sreekanth Nair</div>
-              <div class="reviewer-meta">5 months ago · Google</div>
-            </div>
-          </div>
-          <div class="stars text-sm mb-2">★★★★★</div>
-          <p class="review-text">"Excellent playschool! The staff is warm and professional. My son used to be very shy but after a few months at Eden School, he's confident, social, and loves going to school every morning."</p>
-          <div class="review-footer">
-            <img src="https://upload.wikimedia.org/wikipedia/commons/2/2f/Google_2015_logo.svg" alt="Google" class="h-3.5" />
-          </div>
-        </div>
-
-        <!-- Review 3 -->
-        <div class="review-card">
-          <div class="review-header">
-            <div class="reviewer-avatar" style="background:#06C67A;">P</div>
-            <div>
-              <div class="reviewer-name">Priya Menon</div>
-              <div class="reviewer-meta">1 month ago · Google</div>
-            </div>
-          </div>
-          <div class="stars text-sm mb-2">★★★★★</div>
-          <p class="review-text">"The Play·Learn·Grow philosophy really shows in the way they handle each child. My twins are in different classes and both teachers are amazing. Clean, safe, and so well organised."</p>
-          <div class="review-footer">
-            <img src="https://upload.wikimedia.org/wikipedia/commons/2/2f/Google_2015_logo.svg" alt="Google" class="h-3.5" />
-          </div>
-        </div>
-
-        <!-- Review 4 -->
-        <div class="review-card">
-          <div class="review-header">
-            <div class="reviewer-avatar" style="background:#007A95;">R</div>
-            <div>
-              <div class="reviewer-name">Roshan Thomas</div>
-              <div class="reviewer-meta">2 months ago · Google</div>
-            </div>
-          </div>
-          <div class="stars text-sm mb-2">★★★★★</div>
-          <p class="review-text">"Wonderful school! The events and activities they organise are creative and really involve the kids. The school management is always responsive and approachable. Highly recommended!"</p>
-          <div class="review-footer">
-            <img src="https://upload.wikimedia.org/wikipedia/commons/2/2f/Google_2015_logo.svg" alt="Google" class="h-3.5" />
-          </div>
-        </div>
-
-      </div>
-
-      <!-- CTA to Google -->
+            <!-- CTA to Google -->
       <div class="text-center">
         <a href="https://www.google.com/search?q=Eden+School+of+Learning+Trivandrum+reviews"
            target="_blank" rel="noopener"

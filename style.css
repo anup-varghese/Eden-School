@@ -476,6 +476,15 @@ body { overflow-x: hidden; }
 .form-input::placeholder { color: #8EAAB5; }
 .form-input.border-red-400 { border-color: #f87171; }
 
+/* ── Review skeleton ───────────────────────────────── */
+.review-skeleton {
+  height: 220px;
+  border-radius: 20px;
+  background: linear-gradient(90deg, #D0F2FA 25%, #B0E8F5 50%, #D0F2FA 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}
+
 /* ── Scroll-in animation ───────────────────────────── */
 .fade-up {
   opacity: 0;
