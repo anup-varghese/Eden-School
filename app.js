@@ -1,72 +1,36 @@
-/**
- * app.js — Firebase init + live data loaders
- *
- * Loads from Firestore:
- *   • googleReviews   → rendered in the testimonials section
- *   • schoolInfo/google → overall rating badge
- *   • instagramPosts  → rendered in the events feed section
- *
- * Falls back gracefully to static content if Firebase isn't configured yet.
- */
+const FIRESTORE_BASE = 'https://firestore.googleapis.com/v1/projects/eden-school-website/databases/eden-school-website/documents';
 
-import { initializeApp }  from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
-import {
-  getFirestore,
-  collection,
-  doc,
-  getDoc,
-  getDocs,
-  query,
-  orderBy,
-  limit,
-} from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
+loadGoogleReviews();
+loadInstagramFeed();
 
-/* ── Firebase config — REPLACE with your project's config ── */
-const firebaseConfig = {
-  apiKey:            "AIzaSyCcbjXTC-r5RRnW4aomHj6Ltr32WPIQk94",
-  authDomain:        "eden-school-website.firebaseapp.com",
-  projectId:         "eden-school-website",
-  storageBucket:     "eden-school-website.firebasestorage.app",
-  messagingSenderId: "385769047478",
-  appId:             "1:385769047478:web:8c15669de06fa796b32d17",
-};
-
-const IS_CONFIGURED = !firebaseConfig.apiKey.startsWith('REPLACE');
-
-if (IS_CONFIGURED) {
-  const app = initializeApp(firebaseConfig);
-  const db  = getFirestore(app, 'eden-school-website');
-  loadGoogleReviews(db);
-  loadInstagramFeed(db);
-} else {
-  /* Not configured yet — show static fallbacks */
-  showStaticReviews();
-  showFeedFallback();
-}
-
-
-/* ══════════════════════════════════════════════════════
-   GOOGLE REVIEWS
-   ══════════════════════════════════════════════════════ */
-async function loadGoogleReviews(db) {
+async function loadGoogleReviews() {
   try {
-    /* Load overall rating */
-    const infoSnap = await getDoc(doc(db, 'schoolInfo', 'google'));
-    if (infoSnap.exists()) {
-      const { rating, userRatingCount } = infoSnap.data();
-      updateRatingBadge(rating, userRatingCount);
+    const [infoRes, reviewsRes] = await Promise.all([
+      fetch(FIRESTORE_BASE + '/schoolInfo/google'),
+      fetch(FIRESTORE_BASE + '/googleReviews'),
+    ]);
+
+    if (infoRes.ok) {
+      const info = await infoRes.json();
+      const rating = info.fields?.rating?.integerValue || info.fields?.rating?.doubleValue;
+      const count  = info.fields?.userRatingCount?.integerValue;
+      if (rating) updateRatingBadge(Number(rating), Number(count));
     }
 
-    /* Load individual reviews */
-    const reviewsSnap = await getDocs(collection(db, 'googleReviews'));
+    if (!reviewsRes.ok) { showStaticReviews(); return; }
 
-    if (reviewsSnap.empty) {
-      showStaticReviews();
-      return;
-    }
+    const reviewsJson = await reviewsRes.json();
+    const docs = reviewsJson.documents || [];
 
-    const reviews = [];
-    reviewsSnap.forEach(d => reviews.push(d.data()));
+    if (!docs.length) { showStaticReviews(); return; }
+
+    const reviews = docs.map(d => ({
+      authorName:   d.fields?.authorName?.stringValue   || 'Anonymous',
+      authorPhoto:  d.fields?.authorPhoto?.stringValue  || '',
+      rating:       Number(d.fields?.rating?.integerValue || d.fields?.rating?.doubleValue || 5),
+      text:         d.fields?.text?.stringValue         || '',
+      relativeTime: d.fields?.relativeTime?.stringValue || '',
+    }));
 
     renderReviews(reviews);
   } catch (err) {
@@ -79,9 +43,9 @@ function updateRatingBadge(rating, count) {
   const ratingEl     = document.getElementById('googleRating');
   const heroRatingEl = document.getElementById('heroGoogleRating');
   const countEl      = document.getElementById('googleRatingCount');
-  if (ratingEl)     ratingEl.textContent     = rating?.toFixed(1) ?? '—';
-  if (heroRatingEl) heroRatingEl.textContent  = rating?.toFixed(1) ?? '5.0';
-  if (countEl)      countEl.textContent       = count ? `Based on ${count.toLocaleString()} Google Reviews` : 'Based on Google Reviews';
+  if (ratingEl)     ratingEl.textContent     = rating.toFixed(1);
+  if (heroRatingEl) heroRatingEl.textContent  = rating.toFixed(1);
+  if (countEl)      countEl.textContent       = count ? 'Based on ' + count.toLocaleString() + ' Google Reviews' : 'Based on Google Reviews';
 }
 
 function renderReviews(reviews) {
@@ -98,29 +62,24 @@ function renderReviews(reviews) {
 
     const card = document.createElement('div');
     card.className = 'review-card';
-    card.innerHTML = `
-      <div class="review-header">
-        ${review.authorPhoto
-          ? `<img src="${review.authorPhoto}" alt="${review.authorName}" class="reviewer-avatar" style="background:none;padding:0;object-fit:cover;" />`
-          : `<div class="reviewer-avatar" style="background:${color};">${initial}</div>`
-        }
-        <div>
-          <div class="reviewer-name">${review.authorName || 'Anonymous'}</div>
-          <div class="reviewer-meta">${review.relativeTime || ''} · Google</div>
-        </div>
-      </div>
-      <div class="stars text-sm mb-2">${stars}</div>
-      <p class="review-text">"${review.text || ''}"</p>
-      <div class="review-footer">
-        <img src="https://upload.wikimedia.org/wikipedia/commons/2/2f/Google_2015_logo.svg" alt="Google" class="h-3.5" />
-      </div>`;
+    card.innerHTML =
+      '<div class="review-header">'
+      + (review.authorPhoto
+        ? '<img src="' + review.authorPhoto + '" alt="' + review.authorName + '" class="reviewer-avatar" style="background:none;padding:0;object-fit:cover;" />'
+        : '<div class="reviewer-avatar" style="background:' + color + ';">' + initial + '</div>')
+      + '<div>'
+      + '<div class="reviewer-name">' + review.authorName + '</div>'
+      + '<div class="reviewer-meta">' + (review.relativeTime || '') + ' · Google</div>'
+      + '</div></div>'
+      + '<div class="stars text-sm mb-2">' + stars + '</div>'
+      + '<p class="review-text">"' + review.text + '"</p>'
+      + '<div class="review-footer"><img src="https://upload.wikimedia.org/wikipedia/commons/2/2f/Google_2015_logo.svg" alt="Google" class="h-3.5" /></div>';
 
     grid.appendChild(card);
   });
 }
 
 function showStaticReviews() {
-  /* Static reviews shown until Firebase function runs for the first time */
   const staticReviews = [
     { authorName: 'Anitha Rajan',   rating: 5, relativeTime: '3 months ago', text: 'My daughter has blossomed so much since joining Eden School. The teachers are incredibly caring and the activities keep the children engaged every single day. Best decision we made!' },
     { authorName: 'Sreekanth Nair', rating: 5, relativeTime: '5 months ago', text: 'Excellent playschool! The staff is warm and professional. My son used to be very shy but after a few months at Eden School, he\'s confident, social, and loves going to school every morning.' },
@@ -130,20 +89,32 @@ function showStaticReviews() {
   renderReviews(staticReviews);
 }
 
-
-/* ══════════════════════════════════════════════════════
-   INSTAGRAM FEED
-   ══════════════════════════════════════════════════════ */
-async function loadInstagramFeed(db) {
+async function loadInstagramFeed() {
   try {
-    const q    = query(collection(db, 'instagramPosts'), orderBy('timestamp', 'desc'), limit(12));
-    const snap = await getDocs(q);
+    const res  = await fetch(FIRESTORE_BASE + '/instagramPosts');
+    const json = await res.json();
+    const docs = json.documents || [];
 
-    if (snap.empty) { showFeedFallback(); return; }
+    if (!docs.length) { showFeedFallback(); return; }
+
+    const posts = docs
+      .map(d => ({
+        id:            d.name.split('/').pop(),
+        media_type:    d.fields?.media_type?.stringValue  || 'IMAGE',
+        media_url:     d.fields?.media_url?.stringValue   || '',
+        thumbnail_url: d.fields?.thumbnail_url?.stringValue || '',
+        permalink:     d.fields?.permalink?.stringValue   || 'https://www.instagram.com/esltrivandrum',
+        caption:       d.fields?.caption?.stringValue     || '',
+        like_count:    Number(d.fields?.like_count?.integerValue || 0),
+        timestamp:     d.fields?.timestamp?.stringValue   || '',
+      }))
+      .sort((a, b) => b.timestamp.localeCompare(a.timestamp))
+      .slice(0, 12);
 
     const feed = document.getElementById('instagramFeed');
+    if (!feed) return;
     feed.innerHTML = '';
-    snap.forEach(d => feed.appendChild(buildFeedItem(d.data())));
+    posts.forEach(post => feed.appendChild(buildFeedItem(post)));
   } catch (err) {
     console.error('Feed load error:', err);
     showFeedFallback();
@@ -170,7 +141,7 @@ function buildFeedItem(post) {
     link.appendChild(video);
     const badge = document.createElement('div');
     badge.className   = 'feed-item-video-badge';
-    badge.textContent = '▶ Video';
+    badge.textContent = 'Video';
     link.appendChild(badge);
   } else {
     const img = document.createElement('img');
@@ -183,13 +154,15 @@ function buildFeedItem(post) {
 
   const overlay = document.createElement('div');
   overlay.className = 'feed-item-overlay';
-  if (post.like_count) overlay.innerHTML = `<span class="feed-item-likes">♥ ${post.like_count}</span>`;
+  if (post.like_count) overlay.innerHTML = '<span class="feed-item-likes">♥ ' + post.like_count + '</span>';
   link.appendChild(overlay);
 
   return link;
 }
 
 function showFeedFallback() {
-  document.getElementById('instagramFeed').innerHTML = '';
-  document.getElementById('feedFallback')?.classList.remove('hidden');
+  const feed = document.getElementById('instagramFeed');
+  if (feed) feed.innerHTML = '';
+  const fallback = document.getElementById('feedFallback');
+  if (fallback) fallback.classList.remove('hidden');
 }
