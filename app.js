@@ -23,19 +23,19 @@ import {
 
 /* ── Firebase config — REPLACE with your project's config ── */
 const firebaseConfig = {
-  apiKey:            "REPLACE_WITH_YOUR_API_KEY",
-  authDomain:        "REPLACE_WITH_YOUR_AUTH_DOMAIN",
-  projectId:         "REPLACE_WITH_YOUR_PROJECT_ID",
-  storageBucket:     "REPLACE_WITH_YOUR_STORAGE_BUCKET",
-  messagingSenderId: "REPLACE_WITH_YOUR_MESSAGING_SENDER_ID",
-  appId:             "REPLACE_WITH_YOUR_APP_ID",
+  apiKey:            "AIzaSyCcbjXTC-r5RRnW4aomHj6Ltr32WPIQk94",
+  authDomain:        "eden-school-website.firebaseapp.com",
+  projectId:         "eden-school-website",
+  storageBucket:     "eden-school-website.firebasestorage.app",
+  messagingSenderId: "385769047478",
+  appId:             "1:385769047478:web:8c15669de06fa796b32d17",
 };
 
 const IS_CONFIGURED = !firebaseConfig.apiKey.startsWith('REPLACE');
 
 if (IS_CONFIGURED) {
   const app = initializeApp(firebaseConfig);
-  const db  = getFirestore(app);
+  const db  = getFirestore(app, 'eden-school-website');
   loadGoogleReviews(db);
   loadInstagramFeed(db);
 } else {
@@ -76,10 +76,12 @@ async function loadGoogleReviews(db) {
 }
 
 function updateRatingBadge(rating, count) {
-  const ratingEl = document.getElementById('googleRating');
-  const countEl  = document.getElementById('googleRatingCount');
-  if (ratingEl) ratingEl.textContent = rating?.toFixed(1) ?? '—';
-  if (countEl)  countEl.textContent  = count ? `Based on ${count.toLocaleString()} Google Reviews` : 'Based on Google Reviews';
+  const ratingEl     = document.getElementById('googleRating');
+  const heroRatingEl = document.getElementById('heroGoogleRating');
+  const countEl      = document.getElementById('googleRatingCount');
+  if (ratingEl)     ratingEl.textContent     = rating?.toFixed(1) ?? '—';
+  if (heroRatingEl) heroRatingEl.textContent  = rating?.toFixed(1) ?? '5.0';
+  if (countEl)      countEl.textContent       = count ? `Based on ${count.toLocaleString()} Google Reviews` : 'Based on Google Reviews';
 }
 
 function renderReviews(reviews) {
