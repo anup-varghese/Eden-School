@@ -24,17 +24,20 @@ async function loadGoogleReviews() {
 
     if (!docs.length) { showStaticReviews(); return; }
 
-    const reviews = docs
+    const filtered = docs
       .map(d => ({
         authorName:   d.fields?.authorName?.stringValue   || 'Anonymous',
         authorPhoto:  d.fields?.authorPhoto?.stringValue  || '',
         rating:       Number(d.fields?.rating?.integerValue || d.fields?.rating?.doubleValue || 5),
         text:         d.fields?.text?.stringValue         || '',
         relativeTime: d.fields?.relativeTime?.stringValue || '',
+        publishTime:  d.fields?.publishTime?.stringValue  || '',
       }))
       .filter(r => r.rating >= 4)
-      .sort((a, b) => b.rating - a.rating)
-      .slice(0, 5);
+      .sort((a, b) => b.publishTime.localeCompare(a.publishTime));
+
+    const count = filtered.length >= 8 ? 8 : filtered.length >= 4 ? 4 : filtered.length;
+    const reviews = filtered.slice(0, count);
 
     renderReviews(reviews);
   } catch (err) {
