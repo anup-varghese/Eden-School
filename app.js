@@ -111,7 +111,7 @@ async function loadInstagramFeed() {
         media_type:    d.fields?.media_type?.stringValue  || 'IMAGE',
         media_url:     d.fields?.media_url?.stringValue   || '',
         thumbnail_url: d.fields?.thumbnail_url?.stringValue || '',
-        permalink:     d.fields?.permalink?.stringValue   || 'https://www.instagram.com/esltrivandrum',
+        permalink:     d.fields?.permalink?.stringValue   || 'https://www.instagram.com/eden_school_of_learning',
         caption:       d.fields?.caption?.stringValue     || '',
         like_count:    Number(d.fields?.like_count?.integerValue || 0),
         timestamp:     d.fields?.timestamp?.stringValue   || '',
@@ -119,10 +119,36 @@ async function loadInstagramFeed() {
       .sort((a, b) => b.timestamp.localeCompare(a.timestamp))
       .slice(0, 12);
 
-    const feed = document.getElementById('instagramFeed');
-    if (!feed) return;
-    feed.innerHTML = '';
-    posts.forEach(post => feed.appendChild(buildFeedItem(post)));
+    buildCarousel('instagramFeed', posts, function(slide, post) {
+      const link = document.createElement('a');
+      link.href   = post.permalink;
+      link.target = '_blank';
+      link.rel    = 'noopener noreferrer';
+      link.style.cssText = 'display:block;width:100%;height:100%;';
+
+      const isVideo = post.media_type === 'VIDEO';
+      if (isVideo) {
+        const video = document.createElement('video');
+        video.src         = post.media_url;
+        video.muted       = true;
+        video.loop        = true;
+        video.playsinline = true;
+        video.poster      = post.thumbnail_url || '';
+        link.appendChild(video);
+        const badge = document.createElement('div');
+        badge.className   = 'carousel-video-badge';
+        badge.textContent = 'Video';
+        slide.appendChild(badge);
+      } else {
+        const img    = document.createElement('img');
+        img.src      = post.media_url;
+        img.alt      = post.caption ? post.caption.slice(0, 80) : 'Eden School post';
+        img.loading  = 'lazy';
+        img.decoding = 'async';
+        link.appendChild(img);
+      }
+      slide.appendChild(link);
+    }, 4000);
   } catch (err) {
     console.error('Feed load error:', err);
     showFeedFallback();
@@ -177,46 +203,77 @@ function showFeedFallback() {
 
 async function loadFacebookFeed() {
   try {
-    const res  = await fetch(FIRESTORE_BASE + '/facebookPosts?pageSize=9');
+    const res  = await fetch(FIRESTORE_BASE + '/facebookPosts?pageSize=12');
     const json = await res.json();
     const docs = json.documents || [];
     if (!docs.length) return;
 
     const posts = docs
       .map(d => ({
-        picture:   d.fields?.picture?.stringValue   || '',
-        message:   d.fields?.message?.stringValue   || '',
-        permalink: d.fields?.permalink?.stringValue || 'https://www.facebook.com/esltvm',
+        picture:     d.fields?.picture?.stringValue     || '',
+        message:     d.fields?.message?.stringValue     || '',
+        permalink:   d.fields?.permalink?.stringValue   || 'https://www.facebook.com/esltvm',
         createdTime: d.fields?.createdTime?.stringValue || '',
       }))
       .filter(p => p.picture)
       .sort((a, b) => b.createdTime.localeCompare(a.createdTime))
-      .slice(0, 9);
+      .slice(0, 12);
 
-    const feed = document.getElementById('facebookFeed');
-    if (!feed) return;
-    feed.innerHTML = '';
-    posts.forEach(post => {
+    buildCarousel('facebookFeed', posts, function(slide, post) {
       const link = document.createElement('a');
       link.href   = post.permalink;
       link.target = '_blank';
       link.rel    = 'noopener noreferrer';
-      link.className = 'feed-item';
+      link.style.cssText = 'display:block;width:100%;height:100%;';
 
-      const img = document.createElement('img');
-      img.src     = post.picture;
-      img.alt     = post.message ? post.message.slice(0, 80) : 'Eden School post';
-      img.loading = 'lazy';
+      const img    = document.createElement('img');
+      img.src      = post.picture;
+      img.alt      = post.message ? post.message.slice(0, 80) : 'Eden School post';
+      img.loading  = 'lazy';
       img.decoding = 'async';
       link.appendChild(img);
-
-      const overlay = document.createElement('div');
-      overlay.className = 'feed-item-overlay';
-      link.appendChild(overlay);
-
-      feed.appendChild(link);
-    });
+      slide.appendChild(link);
+    }, 4500);
   } catch (err) {
     console.error('Facebook feed load error:', err);
   }
+}
+
+function buildCarousel(containerId, items, buildSlide, interval) {
+  const container = document.getElementById(containerId);
+  if (!container || !items.length) return;
+
+  container.innerHTML = '';
+  container.className = 'feed-carousel';
+
+  const track = document.createElement('div');
+  track.className = 'carousel-track';
+  items.forEach(function(item) {
+    const slide = document.createElement('div');
+    slide.className = 'carousel-slide';
+    buildSlide(slide, item);
+    track.appendChild(slide);
+  });
+  container.appendChild(track);
+
+  const dotsEl = document.createElement('div');
+  dotsEl.className = 'carousel-dots';
+  items.forEach(function(_, i) {
+    const dot = document.createElement('span');
+    dot.className = 'carousel-dot' + (i === 0 ? ' active' : '');
+    dotsEl.appendChild(dot);
+  });
+  container.appendChild(dotsEl);
+
+  let current = 0;
+  const dots  = dotsEl.querySelectorAll('.carousel-dot');
+
+  function goTo(index) {
+    current = (index + items.length) % items.length;
+    track.style.transform = 'translateX(-' + (current * 100) + '%)';
+    dots.forEach(function(d, i) { d.classList.toggle('active', i === current); });
+  }
+
+  dots.forEach(function(dot, i) { dot.addEventListener('click', function() { goTo(i); }); });
+  setInterval(function() { goTo(current + 1); }, interval || 4000);
 }

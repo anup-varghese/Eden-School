@@ -380,6 +380,58 @@ body { overflow-x: hidden; }
   100% { background-position: -200% 0; }
 }
 
+/* ── Feed Carousel ─────────────────────────────────── */
+.feed-carousel {
+  position: relative;
+  width: 100%;
+  max-width: 340px;
+  border-radius: 1rem;
+  overflow: hidden;
+  aspect-ratio: 1;
+  background: #D0F2FA;
+}
+.carousel-track {
+  display: flex;
+  width: 100%;
+  height: 100%;
+  transition: transform 0.5s ease;
+}
+.carousel-slide {
+  flex-shrink: 0;
+  width: 100%;
+  height: 100%;
+  position: relative;
+}
+.carousel-slide img,
+.carousel-slide video {
+  width: 100%; height: 100%;
+  object-fit: cover;
+}
+.carousel-dots {
+  position: absolute;
+  bottom: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 5px;
+  z-index: 2;
+}
+.carousel-dot {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.5);
+  transition: background 0.3s;
+  cursor: pointer;
+}
+.carousel-dot.active { background: white; }
+.carousel-video-badge {
+  position: absolute; top: 8px; right: 8px;
+  background: rgba(0,0,0,0.55); color: white;
+  border-radius: 6px; padding: 2px 7px;
+  font-size: 0.65rem; font-weight: 700;
+  z-index: 1;
+}
+
 /* ── Google Reviews ────────────────────────────────── */
 .stars { color: #FBBC04; letter-spacing: 0.05em; }
 
