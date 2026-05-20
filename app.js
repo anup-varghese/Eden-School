@@ -2,6 +2,7 @@ const FIRESTORE_BASE = 'https://firestore.googleapis.com/v1/projects/eden-school
 
 loadGoogleReviews();
 loadInstagramFeed();
+loadFacebookFeed();
 
 async function loadGoogleReviews() {
   try {
@@ -172,4 +173,50 @@ function showFeedFallback() {
   if (feed) feed.innerHTML = '';
   const fallback = document.getElementById('feedFallback');
   if (fallback) fallback.classList.remove('hidden');
+}
+
+async function loadFacebookFeed() {
+  try {
+    const res  = await fetch(FIRESTORE_BASE + '/facebookPosts?pageSize=9');
+    const json = await res.json();
+    const docs = json.documents || [];
+    if (!docs.length) return;
+
+    const posts = docs
+      .map(d => ({
+        picture:   d.fields?.picture?.stringValue   || '',
+        message:   d.fields?.message?.stringValue   || '',
+        permalink: d.fields?.permalink?.stringValue || 'https://www.facebook.com/esltvm',
+        createdTime: d.fields?.createdTime?.stringValue || '',
+      }))
+      .filter(p => p.picture)
+      .sort((a, b) => b.createdTime.localeCompare(a.createdTime))
+      .slice(0, 9);
+
+    const feed = document.getElementById('facebookFeed');
+    if (!feed) return;
+    feed.innerHTML = '';
+    posts.forEach(post => {
+      const link = document.createElement('a');
+      link.href   = post.permalink;
+      link.target = '_blank';
+      link.rel    = 'noopener noreferrer';
+      link.className = 'feed-item';
+
+      const img = document.createElement('img');
+      img.src     = post.picture;
+      img.alt     = post.message ? post.message.slice(0, 80) : 'Eden School post';
+      img.loading = 'lazy';
+      img.decoding = 'async';
+      link.appendChild(img);
+
+      const overlay = document.createElement('div');
+      overlay.className = 'feed-item-overlay';
+      link.appendChild(overlay);
+
+      feed.appendChild(link);
+    });
+  } catch (err) {
+    console.error('Facebook feed load error:', err);
+  }
 }
