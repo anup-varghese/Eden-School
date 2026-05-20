@@ -246,15 +246,13 @@ function buildCarousel(containerId, items, buildSlide, interval) {
   container.innerHTML = '';
   container.className = 'feed-carousel';
 
-  const track = document.createElement('div');
-  track.className = 'carousel-track';
-  items.forEach(function(item) {
+  const slides = items.map(function(item, i) {
     const slide = document.createElement('div');
-    slide.className = 'carousel-slide';
+    slide.className = 'carousel-slide' + (i === 0 ? ' active' : '');
     buildSlide(slide, item);
-    track.appendChild(slide);
+    container.appendChild(slide);
+    return slide;
   });
-  container.appendChild(track);
 
   const dotsEl = document.createElement('div');
   dotsEl.className = 'carousel-dots';
@@ -266,12 +264,14 @@ function buildCarousel(containerId, items, buildSlide, interval) {
   container.appendChild(dotsEl);
 
   let current = 0;
-  const dots  = dotsEl.querySelectorAll('.carousel-dot');
+  const dots = dotsEl.querySelectorAll('.carousel-dot');
 
   function goTo(index) {
+    slides[current].classList.remove('active');
+    dots[current].classList.remove('active');
     current = (index + items.length) % items.length;
-    track.style.transform = 'translateX(-' + (current * 100) + '%)';
-    dots.forEach(function(d, i) { d.classList.toggle('active', i === current); });
+    slides[current].classList.add('active');
+    dots[current].classList.add('active');
   }
 
   dots.forEach(function(dot, i) { dot.addEventListener('click', function() { goTo(i); }); });
